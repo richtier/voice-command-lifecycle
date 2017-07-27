@@ -1,10 +1,11 @@
 from datetime import datetime
-from unittest.mock import Mock
+from unittest.mock import call, Mock
 
 from freezegun import freeze_time
 import pytest
 
 from command_lifecycle.lifecycle import BaseAudioLifecycle
+from command_lifecycle import helpers
 
 
 class SimpleAudioLifecycle(BaseAudioLifecycle):
@@ -117,3 +118,36 @@ def has_has_command_timedout_false():
     lifecycle.command_timeout_time = datetime(2012, 1, 14, 12, 0, 0)
 
     assert lifecycle.has_command_timedout() is False
+
+
+def test_default_audio_converter():
+    lifecycle = SimpleAudioLifecycle()
+    expected = helpers.NoOperationConverter
+
+    assert lifecycle.audio_converter_class == expected
+
+
+def test_default_audio_explicit():
+    class AudioLifecycle(BaseAudioLifecycle):
+        audio_converter_class = helpers.WebAudioToWavConverter
+
+    lifecycle = AudioLifecycle()
+    expected = helpers.WebAudioToWavConverter
+
+    assert lifecycle.audio_converter_class == expected
+
+
+def test_extend_audio_converts_to_wav():
+    class AudioLifecycle(BaseAudioLifecycle):
+        was_wakeword_uttered = Mock(return_value=False)
+        has_command_finished = Mock(return_value=False)
+        audio_converter_class = Mock(convert=Mock(return_value='return-value'))
+        wakeword_audio_buffer_class = Mock
+
+    lifecycle = AudioLifecycle()
+    lifecycle.extend_audio(b'1234')
+
+    assert lifecycle.audio_converter_class.convert.call_count == 1
+    assert lifecycle.audio_converter_class.convert.call_args == call(b'1234')
+    assert lifecycle.audio_buffer.extend.call_count == 1
+    assert lifecycle.audio_buffer.extend.call_args == call('return-value')

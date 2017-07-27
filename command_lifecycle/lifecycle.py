@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from command_lifecycle import buffer, wakeword
+from command_lifecycle import buffer, helpers, wakeword
 
 
 class BaseAudioLifecycle:
@@ -10,13 +10,15 @@ class BaseAudioLifecycle:
     command_timeout_time = None
     is_command_pending = False
     audio_buffer = None
+    audio_converter_class = helpers.NoOperationConverter
 
     def __init__(self):
         self.audio_buffer = self.wakeword_audio_buffer_class()
         self.audio_detector = self.audio_detector_class()
 
-    def extend_audio(self, wav_bytes):
-        self.audio_buffer.extend(wav_bytes)
+    def extend_audio(self, input_audio):
+        wav_audio = self.audio_converter_class.convert(input_audio)
+        self.audio_buffer.extend(wav_audio)
         if self.was_wakeword_uttered():
             self.handle_command_started()
         elif self.has_command_finished():
