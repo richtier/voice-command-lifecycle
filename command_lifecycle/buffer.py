@@ -7,10 +7,10 @@ class AudioBufferBase(collections.deque):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, maxlen=self.maxlen)
 
-    def get(self):
+    def get(self) -> bytes:
         return bytes(bytearray(self))
 
-    def popleft_size(self, size):
+    def popleft_size(self, size: int) -> bytes:
         sliced = bytearray()
         for i in range(size):
             if self:

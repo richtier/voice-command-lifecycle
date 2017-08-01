@@ -1,6 +1,7 @@
 from array import array
 import audioop
 import struct
+from typing import Iterable
 
 
 class NoOperationConverter:
@@ -28,7 +29,7 @@ class WebAudioToWavConverter:
     audio_channels = 1
 
     @classmethod
-    def convert(cls, raw_floats):
+    def convert(cls, raw_floats: Iterable[float]) -> Iterable[int]:
         left_channel, right_channel = audioop.ratecv(
             cls.float_to_pcm(raw_floats),
             cls.sample_width,
@@ -40,7 +41,7 @@ class WebAudioToWavConverter:
         return left_channel
 
     @classmethod
-    def float_to_pcm(cls, raw_floats):
+    def float_to_pcm(cls, raw_floats: Iterable[float]) -> Iterable[int]:
         floats = array('f', raw_floats)
         # powerful microphones can output samples out of range (<-1.0, >1.0).
         floats = (filter(lambda x: x >= -1.0 and x <= 1.0, floats))
