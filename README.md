@@ -1,14 +1,21 @@
-# voice-command-lifecycle
+# voice-command-lifecycle #
 Python library to manage the life-cycle of voice commands. Useful working with Alexa Voice Service.
 
-## Installation
+## Installation ##
 ```
-pip install git+https://github.com/richtier/voice-command-lifecycle.git@v0.1.0#egg=command_lifecycle
+pip install git+https://github.com/richtier/voice-command-lifecycle.git@v0.3.0#egg=command_lifecycle
 ```
 
-## Usage
+### Wakeword detector ###
+A wakeword is a specific word that triggers the code to spring into action. It allows your code to be idle until the special word is uttered.
 
-The audio lifecycle will receive a steady stream of audio via `lifecycle.extend_audio()`. If the prescribed wakeword is uttered, `handle_command_started` is called. `handle_command_finised` is then called once the command audio that followed the wakeword has finished. This is useful if you want to stream some audio to Alexa Voice Service once a wakeword has been uttered.
+The audio lifecycle uses a third parties library to determine if the wakeworkd was uttered. The library will need to be installed first. Supported libraries:
+
+- [Snowboy](https://github.com/Kitt-AI/snowboy#compile-a-python-wrapper). [default]. Once installed you can use `command_lifecycle.wakeword.SnowboyWakewordDetector` audio detector class with your audio lifecycle.
+
+## Usage ##
+
+You should send a steady stream of audio to to the lifecycle by repetitively calling `lifecycle.extend_audio(some_audio_bytes)`. If the prescribed wakeword was uttered, `handle_command_started` is called. `handle_command_finised` is then called once the command audio that followed the wakeword has finished. This is useful if you want to stream some audio to Alexa Voice Service once a wakeword has been uttered.
 
 ```
 import command_lifecycle
@@ -32,12 +39,13 @@ with open('/path/to/audio.wav') as f:
 
 ```
 
-### A more useful example
+### A more useful example ###
 
 `command_lifecycle` is useful for interacting with voice services. The lifecycle can wait until a wakeword such as "Alexa", or "ok google" was issued and then start streaming the proceeding audio command to the voice service, then do something useful with the response:
 
 ```
 from avs_client.client import AlexaVoiceServiceClient
+from avs_client.helpers import LifeCycleFileLike
 import command_lifecycle
 
 
@@ -68,5 +76,5 @@ with open('/path/to/audio.wav') as f:
 
 ```
 
-## Other projects
+## Other projects ##
 This library is used by [alexa-browser-client](https://github.com/richtier/alexa-browser-client), which allows you to talk to Alexa from your browser.

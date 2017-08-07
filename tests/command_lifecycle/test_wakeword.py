@@ -4,7 +4,6 @@ import pytest
 
 from command_lifecycle import wakeword
 from command_lifecycle.buffer import WakewordAudioBuffer
-from command_lifecycle.snowboy.snowboydetect import SnowboyDetect
 
 
 @pytest.mark.parametrize("code,expected", [
@@ -15,9 +14,11 @@ from command_lifecycle.snowboy.snowboydetect import SnowboyDetect
 ])
 def test_wakeword_was_wakeword_uttered(code, expected):
     buffer = WakewordAudioBuffer([1, 2])
-    with patch.object(SnowboyDetect, 'RunDetection', return_value=code):
-        detector = wakeword.WakewordDetector()
-        assert detector.was_wakeword_uttered(buffer) is expected
+    snowboy_detector = wakeword.SnowboyWakewordDetector()
+
+    snowboy_detector.detector.RunDetection.return_value = code
+
+    assert snowboy_detector.was_wakeword_uttered(buffer) is expected
 
 
 @pytest.mark.parametrize(("code", "expected"), [
@@ -28,6 +29,8 @@ def test_wakeword_was_wakeword_uttered(code, expected):
 ])
 def test_wakeword_is_talking(code, expected):
     buffer = WakewordAudioBuffer([1, 2])
-    with patch.object(SnowboyDetect, 'RunDetection', return_value=code):
-        detector = wakeword.WakewordDetector()
-        assert detector.is_talking(buffer) is expected
+    snowboy_detector = wakeword.SnowboyWakewordDetector()
+
+    snowboy_detector.detector.RunDetection.return_value = code
+
+    assert snowboy_detector.is_talking(buffer) is expected
