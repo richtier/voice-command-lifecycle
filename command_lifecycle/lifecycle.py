@@ -5,13 +5,13 @@ from command_lifecycle import buffer, helpers, wakeword
 
 
 class BaseAudioLifecycle:
-    wakeword_audio_buffer_class = buffer.WakewordAudioBuffer
-    command_audio_buffer_class = buffer.CommandAudioBuffer
-    audio_detector_class = wakeword.WakewordDetector
-    command_timeout_time = None
-    is_command_pending = False
     audio_buffer = None
     audio_converter_class = helpers.NoOperationConverter
+    audio_detector_class = wakeword.SnowboyWakewordDetector
+    command_audio_buffer_class = buffer.CommandAudioBuffer
+    command_timeout_time = None
+    is_command_pending = False
+    wakeword_audio_buffer_class = buffer.WakewordAudioBuffer
 
     def __init__(self):
         self.audio_buffer = self.wakeword_audio_buffer_class()

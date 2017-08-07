@@ -18,7 +18,10 @@ class SimpleAudioLifecycle(BaseAudioLifecycle):
     [[b'four|', b'five|', b'six'], b'four|five|six']
 ])
 def test_extend_audio_extends_audio_buffer(extend_byte_payloads, expected):
-    lifecycle = SimpleAudioLifecycle()
+    class AudioLifecycle(BaseAudioLifecycle):
+        was_wakeword_uttered = Mock(return_value=False)
+
+    lifecycle = AudioLifecycle()
 
     for wav_bytes in extend_byte_payloads:
         lifecycle.extend_audio(wav_bytes)
@@ -44,7 +47,7 @@ def test_extend_audio_command_finished_handled(has_finished, call_count):
     class AudioLifecycle(BaseAudioLifecycle):
         has_command_finished = Mock(return_value=has_finished)
         handle_command_finised = Mock()
-
+        was_wakeword_uttered = Mock(return_value=False)
     lifecycle = AudioLifecycle()
 
     lifecycle.extend_audio(b'one')
