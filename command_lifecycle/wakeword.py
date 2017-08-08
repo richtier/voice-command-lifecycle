@@ -40,7 +40,7 @@ class SnowboyWakewordDetector(BaseWakewordDetector):
     wakeword_library_import_path = 'snowboy.snowboydetect.SnowboyDetect'
 
     resource_file = b'snowboy/resources/common.res'
-    decoder_model = b'snowboy/resources/snowboy.umdl'
+    decoder_model = b'snowboy/resources/alexa.umdl'
     sensitivity = 0.5
     audio_gain = 1
 

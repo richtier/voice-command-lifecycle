@@ -154,3 +154,15 @@ def test_extend_audio_converts_to_wav():
     assert lifecycle.audio_converter_class.convert.call_args == call(b'1234')
     assert lifecycle.audio_buffer.extend.call_count == 1
     assert lifecycle.audio_buffer.extend.call_args == call('return-value')
+
+
+def test_to_lifecycle():
+    class AudioLifecycle(BaseAudioLifecycle):
+        was_wakeword_uttered = Mock(return_value=False)
+
+    lifecycle = AudioLifecycle()
+    lifecycle.extend_audio(b'1234')
+
+    audio_file = lifecycle.to_audio_file(lifecycle)
+    assert isinstance(audio_file, helpers.LifeCycleFileLike)
+    assert audio_file.lifecycle == lifecycle

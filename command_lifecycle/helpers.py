@@ -47,3 +47,20 @@ class WebAudioToWavConverter:
         floats = (filter(lambda x: x >= -1.0 and x <= 1.0, floats))
         samples = [int(sample * 32767) for sample in floats]
         return struct.pack("<%dh" % len(samples), *samples)
+
+
+class LifeCycleFileLike:
+    def __init__(self, lifecycle):
+        self.lifecycle = lifecycle
+
+    def read(self, size):
+        return self.lifecycle.audio_buffer.popleft_size(size)
+
+    def __len__(self):
+        # when length == 0 the uploader will close the request. If the stream
+        # has all the data popped from it, but there is more to be written to
+        # it then make the uploader wait by making the uploader think there is
+        # data available.
+        if self.lifecycle.is_command_pending:
+            return 1025
+        return len(self.lifecycle.audio_buffer)

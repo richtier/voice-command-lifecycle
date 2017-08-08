@@ -12,6 +12,7 @@ class BaseAudioLifecycle:
     command_timeout_time = None
     is_command_pending = False
     wakeword_audio_buffer_class = buffer.WakewordAudioBuffer
+    to_audio_file = helpers.LifeCycleFileLike
 
     def __init__(self):
         self.audio_buffer = self.wakeword_audio_buffer_class()
