@@ -3,9 +3,8 @@ from unittest.mock import patch, PropertyMock
 import pytest
 
 
-
 @pytest.fixture(autouse=True)
-def mock_snowboy():
+def mock_snowboy(request):
     path = (
         'command_lifecycle.wakeword.SnowboyWakewordDetector.'
         'wakeword_library_import_path'
@@ -14,3 +13,11 @@ def mock_snowboy():
     stub.start()
     yield stub
     stub.stop()
+
+
+@pytest.fixture
+def enable_snowboy(mock_snowboy):
+    pytest.importorskip("snowboy")
+    mock_snowboy.stop()
+    yield
+    mock_snowboy.start()
