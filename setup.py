@@ -13,7 +13,7 @@ def get_requirements():
 
 setup(
     name='command_lifecycle',
-    version='0.3.0',
+    version='0.4.0',
     url='https://github.com/richtier/voice-command-lifecycle',
     license='MIT',
     author='Richard Tier',
