@@ -28,7 +28,9 @@ If the default structure does not suit your needs can customize the [wakeword de
 
 ## Usage ##
 
-You should send a steady stream of audio to to the lifecycle by repetitively calling `lifecycle.extend_audio(some_audio_bytes)`. If the prescribed wakeword was uttered, `handle_command_started` is called. `handle_command_finised` is then called once the command audio that followed the wakeword has finished. This is useful if you want to stream some audio to Alexa Voice Service once a wakeword has been uttered.
+You should send a steady stream of audio to to the lifecycle by repetitively calling `lifecycle.extend_audio(some_audio_bytes)`. If the wakeword such as "Alexa" (default), or "ok, Google" was uttered then `handle_command_started` is called. `handle_command_finised` is then called once the command audio that followed the wakeword has finished.
+
+### File audio ###
 
 ```py
 import wave
@@ -37,7 +39,6 @@ import command_lifecycle
 
 
 class AudioLifecycle(command_lifecycle.BaseAudioLifecycle):
-
     def handle_command_started(self):
         super().handle_command_started()
         print('The audio contained the wakeword!')
@@ -48,21 +49,60 @@ class AudioLifecycle(command_lifecycle.BaseAudioLifecycle):
 
 
 lifecycle = AudioLifecycle()
-with wave.open('/path/to/audio.wav', 'rb') as f:
+with wave.open('./tests/resources/alexa_what_time_is_it.wav', 'rb') as f:
     for i in range(int(f.getnframes()/1024)):
         frame = f.readframes(1024)
         lifecycle.extend_audio(frame)
 
 ```
 
-### A more useful example ###
-
-`command_lifecycle` is useful for interacting with voice services. The lifecycle can wait until a wakeword such as "Alexa", or "ok, Google" was issued and then start streaming the proceeding audio command to the voice service (using [Alexa Voice Service Client](https://github.com/richtier/alexa-voice-service-client)), then do something useful with the response:
+### Microphone audio ###
 
 ```py
-import wave
+import pyaudio
 
-from avs_client.client import AlexaVoiceServiceClient
+import command_lifecycle
+
+
+class AudioLifecycle(command_lifecycle.BaseAudioLifecycle):
+    timeout_manager_class = command_lifecycle.timeout.ShortTimeoutManager
+
+    def handle_command_started(self):
+        super().handle_command_started()
+        print('The audio contained the wakeword!')
+
+    def handle_command_finised(self):
+        super().handle_command_finised()
+        print('the command in the audio has finished')
+
+lifecycle = AudioLifecycle()
+
+p = pyaudio.PyAudio()
+stream = p.open(
+    format=pyaudio.paInt16,
+    channels=1,
+    rate=16000,
+    input=True,
+    frames_per_buffer=1024
+)
+
+try:
+    print('listening. Start by saying "Alexa". Press CTRL + C to exit.')
+    while True:
+        lifecycle.extend_audio(stream.read(1024))
+finally:
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+```
+
+### Usage with Alexa ###
+
+`command_lifecycle` is useful for interacting with voice services. The lifecycle waits until a wakeword was issued and then start streaming the audio command to the voice service (using [Alexa Voice Service Client](https://github.com/richtier/alexa-voice-service-client)), then do something useful with the response:
+
+```py
+import pyaudio
+
 import command_lifecycle
 
 
@@ -84,13 +124,25 @@ class AudioLifecycle(command_lifecycle.BaseAudioLifecycle):
         if alexa_response_audio:
             # do something with the AVS audio response, e.g., play it.
 
-
 lifecycle = AudioLifecycle()
-with wave.open('/path/to/audio.wav', 'rb') as f:
-    for i in range(int(f.getnframes()/1024)):
-        frame = f.readframes(1024)
-        lifecycle.extend_audio(frame)
 
+p = pyaudio.PyAudio()
+stream = p.open(
+    format=pyaudio.paInt16,
+    channels=1,
+    rate=16000,
+    input=True,
+    frames_per_buffer=1024
+)
+
+try:
+    print('listening. Start by saying "Alexa". Press CTRL + C to exit.')
+    while True:
+        lifecycle.extend_audio(stream.read(1024))
+finally:
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
 ```
 
 ## Customization ##
@@ -181,7 +233,6 @@ To change this default behaviour `timeout_manager_class` can be changed. The ava
 
 | Timeout manager         | Notes                                            |
 | -------------------------| ------------------------------------------------ |
-| `ImmediateTimeoutManager`  | No timeout. Silence ends the command immediately. Use this if you're loading audio from a file instead of streaming in real time from a microphone |
 | `ShortTimeoutManager`      | Allows one second of silence.                    |
 | `MediumTimeoutManager`     | **default** Allows two seconds of silence.       |
 | `LongTimeoutManager`       | Allows four seconds of silence                   |
