@@ -53,7 +53,6 @@ class SnowboyWakewordDetector(BaseWakewordDetector):
         self.detector.SetSensitivity(str(self.sensitivity).encode())
 
     def was_wakeword_uttered(self, buffer: Type[AudioBufferBase]) -> bool:
-        # -2 on silence, -1 on error, 0 on voice and >0
         return self.detector.RunDetection(buffer.get()) > 0
 
     def is_talking(self, buffer: Type[AudioBufferBase]) -> bool:

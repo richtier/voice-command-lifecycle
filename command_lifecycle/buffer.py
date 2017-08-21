@@ -20,7 +20,7 @@ class AudioBufferBase(collections.deque):
 
 class WakewordAudioBuffer(AudioBufferBase):
     """ Store a few seconds of audio"""
-    maxlen = 80000
+    maxlen = 40000
 
 
 class CommandAudioBuffer(AudioBufferBase):

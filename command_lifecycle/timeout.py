@@ -1,33 +1,30 @@
 import abc
-from datetime import datetime, timedelta
 
 
 class BaseTimeoutManager(abc.ABC):
-    timeout_time = None
-    timeout_seconds = abc.abstractproperty()
+    allowed_silent_frames = abc.abstractproperty()
+    elapsed_silent_frames = 0
 
-    def start(self):
-        delta = timedelta(seconds=self.timeout_seconds)
-        self.timeout_time = datetime.utcnow() + delta
+    def increment(self):
+        self.elapsed_silent_frames += 1
 
-    def stop(self):
-        self.timeout_time = None
+    def reset(self):
+        self.elapsed_silent_frames = 0
 
     def has_timedout(self) -> bool:
-        return datetime.utcnow() >= self.timeout_time
+        return self.elapsed_silent_frames >= self.allowed_silent_frames
 
-
-class ImmediateTimeoutManager(BaseTimeoutManager):
-    timeout_seconds = 0
-
+    @property
+    def remaining_silent_frames(self):
+        return self.allowed_silent_frames - self.elapsed_silent_frames
 
 class ShortTimeoutManager(BaseTimeoutManager):
-    timeout_seconds = 1
+    allowed_silent_frames = 10
 
 
 class MediumTimeoutManager(BaseTimeoutManager):
-    timeout_seconds = 2
+    allowed_silent_frames = 15
 
 
 class LongTimeoutManager(BaseTimeoutManager):
-    timeout_seconds = 4
+    allowed_silent_frames = 20

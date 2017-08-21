@@ -4,7 +4,7 @@ from command_lifecycle.buffer import CommandAudioBuffer, WakewordAudioBuffer
 
 
 def test_maxlen_set():
-    assert WakewordAudioBuffer().maxlen == 80000
+    assert WakewordAudioBuffer().maxlen == 40000
 
 
 def test_maxlen_unset():

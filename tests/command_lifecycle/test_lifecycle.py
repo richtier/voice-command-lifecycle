@@ -7,7 +7,19 @@ import pytest
 from command_lifecycle import BaseAudioLifecycle, helpers, timeout
 
 
-class SimpleAudioLifecycle(BaseAudioLifecycle):
+class MockCallbackMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        patch.object(
+            self, 'handle_command_started',
+            wraps=self.handle_command_started
+        ).start()
+        patch.object(
+            self, 'handle_command_finised',
+            wraps=self.handle_command_finised
+        ).start()
+
+class SimpleAudioLifecycle(MockCallbackMixin, BaseAudioLifecycle):
     pass
 
 
@@ -76,7 +88,7 @@ def test_handle_command_finised_sets_state():
         SimpleAudioLifecycle.wakeword_audio_buffer_class
     )
 
-@pytest.mark.parametrize("expecting_command,talking,has_timedout", [
+@pytest.mark.parametrize("expecting_command,talking,timedout", [
     (True,  True,  False),
     (True,  True,  True),
     (True,  False, False),
@@ -85,20 +97,14 @@ def test_handle_command_finised_sets_state():
     (False, False, False),
     (False, False, True),
 ])
-def test_has_command_finished_false(expecting_command, talking, has_timedout):
+def test_has_command_finished_false(expecting_command, talking, timedout):
 
     class AudioLifecycle(BaseAudioLifecycle):
         is_command_pending = expecting_command
         is_talking = Mock(return_value=talking)
-
-        @classmethod
-        def timeout_manager_class(cls):
-            if has_timedout:
-                return timeout.ImmediateTimeoutManager()
-            return timeout.ShortTimeoutManager()
+        has_timedout = Mock(return_value=timedout)
 
     lifecycle = AudioLifecycle()
-    lifecycle.timeout_manager.start()
 
     assert lifecycle.has_command_finished() is False
 
@@ -108,10 +114,9 @@ def test_has_command_finished_true():
     class AudioLifecycle(BaseAudioLifecycle):
         is_command_pending = True
         is_talking = Mock(return_value=False)
-        timeout_manager_class = timeout.ImmediateTimeoutManager
+        has_timedout = Mock(return_value=True)
 
     lifecycle = AudioLifecycle()
-    lifecycle.timeout_manager.start()
 
     assert lifecycle.has_command_finished() is True
 
@@ -161,81 +166,39 @@ def test_to_lifecycle():
     assert audio_file.lifecycle == lifecycle
 
 
-class MockCallbackMixin:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        patch.object(
-            self, 'handle_command_started',
-            wraps=self.handle_command_started
-        ).start()
-        patch.object(
-            self, 'handle_command_finised',
-            wraps=self.handle_command_finised
-        ).start()
-
-
 def test_e2e_snowboy_snowboy_executes_callbacks(enable_snowboy):
-    class AudioLifecycle(MockCallbackMixin, BaseAudioLifecycle):
-        timeout_manager_class = timeout.ImmediateTimeoutManager
 
-    lifecycle = AudioLifecycle()
+    lifecycle = SimpleAudioLifecycle()
 
     assert lifecycle.handle_command_started.call_count == 0
     assert lifecycle.handle_command_finised.call_count == 0
 
     with wave.open('./tests/resources/alexa_what_time_is_it.wav', 'rb') as f:
-        for i in range(int(f.getnframes()/1024)):
-            frame = f.readframes(1024)
-            lifecycle.extend_audio(frame)
-
-    assert lifecycle.handle_command_started.call_count == 1
-    assert lifecycle.handle_command_finised.call_count == 1
-
-
-def test_e2e_snowboy_snowboy_executes_callbacks_with_timeout(enable_snowboy):
-    class AudioLifecycle(MockCallbackMixin, BaseAudioLifecycle):
-        timeout_manager_class = timeout.ShortTimeoutManager
-
-    lifecycle = AudioLifecycle()
-
-    assert lifecycle.handle_command_started.call_count == 0
-    assert lifecycle.handle_command_finised.call_count == 0
-
-    with wave.open('./tests/resources/alexa_what_time_is_it.wav', 'rb') as f:
-        for i in range(int(f.getnframes()/1024)):
-            frame = f.readframes(1024)
-            lifecycle.extend_audio(frame)
+        while f.tell() < f.getnframes():
+            lifecycle.extend_audio(f.readframes(1024))
 
     assert lifecycle.handle_command_started.call_count == 1
     # finished not called yet: the command has not timedout yet
     assert lifecycle.handle_command_finised.call_count == 0
 
-    # adding some silence to the end
-    lifecycle.extend_audio(bytes([0]*(16886)))
-
-    # but timeout has not happened yet
-    assert lifecycle.handle_command_finised.call_count == 0
-
-    with freeze_time(lifecycle.timeout_manager.timeout_time):
-        lifecycle.extend_audio(bytes([0]))
+    # pass in silence to trigger timeout
+    for i in range(lifecycle.timeout_manager.allowed_silent_frames+1):
+        lifecycle.extend_audio(bytes([0, 0]*(1024*10)))
 
     # timeout has now happened
     assert lifecycle.handle_command_finised.call_count == 1
 
 
 def test_e2e_no_wakeword(enable_snowboy):
-    class AudioLifecycle(MockCallbackMixin, BaseAudioLifecycle):
-        timeout_manager_class = timeout.ImmediateTimeoutManager
 
-    lifecycle = AudioLifecycle()
+    lifecycle = SimpleAudioLifecycle()
 
     assert lifecycle.handle_command_started.call_count == 0
     assert lifecycle.handle_command_finised.call_count == 0
 
     with wave.open('./tests/resources/jim_what_time_is_it.wav', 'rb') as f:
-        for i in range(int(f.getnframes()/1024)):
-            frame = f.readframes(1024)
-            lifecycle.extend_audio(frame)
+        while f.tell() < f.getnframes():
+            lifecycle.extend_audio(f.readframes(1024))
 
     assert lifecycle.handle_command_started.call_count == 0
     assert lifecycle.handle_command_finised.call_count == 0

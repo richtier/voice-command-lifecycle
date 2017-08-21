@@ -30,6 +30,40 @@ If the default structure does not suit your needs can customize the [wakeword de
 
 You should send a steady stream of audio to to the lifecycle by repetitively calling `lifecycle.extend_audio(some_audio_bytes)`. If the wakeword such as "Alexa" (default), or "ok, Google" was uttered then `handle_command_started` is called. `handle_command_finised` is then called once the command audio that followed the wakeword has finished.
 
+### Microphone audio ###
+
+```py
+import pyaudio
+
+import command_lifecycle
+
+
+class AudioLifecycle(command_lifecycle.BaseAudioLifecycle):
+
+    def handle_command_started(self):
+        super().handle_command_started()
+        print('The audio contained the wakeword!')
+
+    def handle_command_finised(self):
+        super().handle_command_finised()
+        print('the command in the audio has finished')
+
+lifecycle = AudioLifecycle()
+
+p = pyaudio.PyAudio()
+stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True)
+
+try:
+    print('listening. Start by saying "Alexa". Press CTRL + C to exit.')
+    while True:
+        lifecycle.extend_audio(stream.read(1024))
+finally:
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+```
+
+
 ### File audio ###
 
 ```py
@@ -50,50 +84,11 @@ class AudioLifecycle(command_lifecycle.BaseAudioLifecycle):
 
 lifecycle = AudioLifecycle()
 with wave.open('./tests/resources/alexa_what_time_is_it.wav', 'rb') as f:
-    for i in range(int(f.getnframes()/1024)):
-        frame = f.readframes(1024)
-        lifecycle.extend_audio(frame)
-
-```
-
-### Microphone audio ###
-
-```py
-import pyaudio
-
-import command_lifecycle
-
-
-class AudioLifecycle(command_lifecycle.BaseAudioLifecycle):
-    timeout_manager_class = command_lifecycle.timeout.ShortTimeoutManager
-
-    def handle_command_started(self):
-        super().handle_command_started()
-        print('The audio contained the wakeword!')
-
-    def handle_command_finised(self):
-        super().handle_command_finised()
-        print('the command in the audio has finished')
-
-lifecycle = AudioLifecycle()
-
-p = pyaudio.PyAudio()
-stream = p.open(
-    format=pyaudio.paInt16,
-    channels=1,
-    rate=16000,
-    input=True,
-    frames_per_buffer=1024
-)
-
-try:
-    print('listening. Start by saying "Alexa". Press CTRL + C to exit.')
-    while True:
-        lifecycle.extend_audio(stream.read(1024))
-finally:
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
+    while f.tell() < f.getnframes():
+        lifecycle.extend_audio(f.readframes(1024))
+    # pad with silence at the end. See "Expecting slower or faster commands".
+    for i in range(lifecycle.timeout_manager.remaining_silent_frames + 1):
+        lifecycle.extend_audio(bytes([0, 0]*(1024*9)))
 ```
 
 ### Usage with Alexa ###
@@ -101,6 +96,7 @@ finally:
 `command_lifecycle` is useful for interacting with voice services. The lifecycle waits until a wakeword was issued and then start streaming the audio command to the voice service (using [Alexa Voice Service Client](https://github.com/richtier/alexa-voice-service-client)), then do something useful with the response:
 
 ```py
+from avs_client.avs_client.client import AlexaVoiceServiceClient
 import pyaudio
 
 import command_lifecycle
@@ -127,13 +123,7 @@ class AudioLifecycle(command_lifecycle.BaseAudioLifecycle):
 lifecycle = AudioLifecycle()
 
 p = pyaudio.PyAudio()
-stream = p.open(
-    format=pyaudio.paInt16,
-    channels=1,
-    rate=16000,
-    input=True,
-    frames_per_buffer=1024
-)
+stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True)
 
 try:
     print('listening. Start by saying "Alexa". Press CTRL + C to exit.')
@@ -227,7 +217,7 @@ lifecycle = AudioLifecycle()
 
 The person giving the audio command might take a moment to collect their thoughts before finishing the command. This silence could be interpreted as the command ending, resulting in `handle_command_finised` being called prematurely.
 
-To avoid this the lifecycle allows the command to contain up to two seconds of silence before the command times out. This silence can happen at the beginning or middle of the command. Note a side-effect of this is `handle_command_finised` will not be called until two seconds after the person has stopped talking.
+To avoid this the lifecycle tolerates some silence in the command before the lifecycle timesout the command. This silence can happen at the beginning or middle of the command. Note a side-effect of this is there will be a pause between when the person has stopped talking and when `handle_command_finised` is called.
 
 To change this default behaviour `timeout_manager_class` can be changed. The available timeout managers are:
 
@@ -235,7 +225,7 @@ To change this default behaviour `timeout_manager_class` can be changed. The ava
 | -------------------------| ------------------------------------------------ |
 | `ShortTimeoutManager`      | Allows one second of silence.                    |
 | `MediumTimeoutManager`     | **default** Allows two seconds of silence.       |
-| `LongTimeoutManager`       | Allows four seconds of silence                   |
+| `LongTimeoutManager`       | Allows tree seconds of silence                   |
 
 To make a custom timeout manager create a subclass of `command_lifecycle.timeout.BaseTimeoutManager`:
 
@@ -247,7 +237,7 @@ from command_lifecycle import timeout, wakeword
 
 
 class MyCustomTimeoutManager(timeout.BaseTimeoutManager):
-    timeout_seconds = 0.5
+    allowed_silent_frames = 40
 
 
 class AudioLifecycle(lifecycle.BaseAudioLifecycle):
