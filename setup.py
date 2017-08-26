@@ -1,6 +1,8 @@
+from setuptools import setup
+
 import pip.download
 from pip.req import parse_requirements
-from setuptools import setup, find_packages
+import pypandoc
 
 
 def get_requirements():
@@ -13,13 +15,14 @@ def get_requirements():
 
 setup(
     name='command_lifecycle',
+    packages=['command_lifecycle'],
     version='0.4.0',
     url='https://github.com/richtier/voice-command-lifecycle',
     license='MIT',
     author='Richard Tier',
+    author_email='rikatee@gmail.com',
     description='Python library to manage the life-cycle of voice commands.',
-    packages=find_packages(),
-    long_description=open('README.md').read(),
+    long_description=pypandoc.convert('README.md', 'rst'),
     include_package_data=True,
     install_requires=get_requirements(),
     classifiers=[
