@@ -18,6 +18,7 @@ class BaseTimeoutManager(abc.ABC):
     def remaining_silent_frames(self):
         return self.allowed_silent_frames - self.elapsed_silent_frames
 
+
 class ShortTimeoutManager(BaseTimeoutManager):
     allowed_silent_frames = 10
 

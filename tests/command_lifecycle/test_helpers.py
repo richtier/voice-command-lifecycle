@@ -2,8 +2,6 @@ from unittest.mock import Mock
 
 from command_lifecycle import helpers, lifecycle
 
-import pytest
-
 
 def test_webaudio_to_wav_audio_converters():
     input_value = [0.1111, 0.3322, 0.3323]

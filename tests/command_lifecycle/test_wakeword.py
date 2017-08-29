@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import pytest
 
 from command_lifecycle import wakeword

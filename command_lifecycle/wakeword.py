@@ -11,7 +11,7 @@ class BaseWakewordDetector(abc.ABC):
     import_error_message = abc.abstractproperty()
 
     def get_wakeword_library(self):
-        package_name, name  = self.wakeword_library_import_path.rsplit('.', 1)
+        package_name, name = self.wakeword_library_import_path.rsplit('.', 1)
         try:
             package_name = importlib.import_module(package_name)
         except ImportError:

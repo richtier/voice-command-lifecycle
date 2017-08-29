@@ -3,7 +3,7 @@ Python library to manage the life-cycle of voice commands. Useful working with A
 
 ## Installation ##
 ```bash
-pip install git+https://github.com/richtier/voice-command-lifecycle.git@0.4.0#egg=command_lifecycle
+pip install command_lifecycle
 ```
 
 ### Wakeword detector ###
@@ -245,6 +245,14 @@ class AudioLifecycle(lifecycle.BaseAudioLifecycle):
 
 ```
 
+## Unit test ##
+
+To run the unit tests, call the following commands:
+
+```sh
+pip install -r requirements-dev.txt
+./scripts/tests.sh
+```
 
 ## Other projects ##
 This library is used by [alexa-browser-client](https://github.com/richtier/alexa-browser-client), which allows you to talk to Alexa from your browser.

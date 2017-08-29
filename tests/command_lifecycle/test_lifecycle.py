@@ -1,13 +1,12 @@
 from unittest.mock import call, Mock, patch
 import wave
 
-from freezegun import freeze_time
 import pytest
 
-from command_lifecycle import BaseAudioLifecycle, helpers, timeout
+from command_lifecycle import BaseAudioLifecycle, helpers
 
 
-class MockCallbackMixin:
+class SimpleAudioLifecycle(BaseAudioLifecycle):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         patch.object(
@@ -19,8 +18,10 @@ class MockCallbackMixin:
             wraps=self.handle_command_finised
         ).start()
 
-class SimpleAudioLifecycle(MockCallbackMixin, BaseAudioLifecycle):
-    pass
+
+@pytest.fixture
+def lifecycle():
+    return SimpleAudioLifecycle()
 
 
 @pytest.mark.parametrize("extend_byte_payloads,expected", [
@@ -66,9 +67,7 @@ def test_extend_audio_command_finished_handled(has_finished, call_count):
     assert lifecycle.handle_command_finised.call_count == call_count
 
 
-def test_handle_command_started_sets_state():
-    lifecycle = SimpleAudioLifecycle()
-
+def test_handle_command_started_sets_state(lifecycle):
     lifecycle.handle_command_started()
 
     assert lifecycle.is_command_pending is True
@@ -77,9 +76,7 @@ def test_handle_command_started_sets_state():
     )
 
 
-def test_handle_command_finised_sets_state():
-    lifecycle = SimpleAudioLifecycle()
-
+def test_handle_command_finised_sets_state(lifecycle):
     lifecycle.handle_command_finised()
 
     assert lifecycle.is_command_pending is False
@@ -87,6 +84,7 @@ def test_handle_command_finised_sets_state():
         lifecycle.audio_buffer,
         SimpleAudioLifecycle.wakeword_audio_buffer_class
     )
+
 
 @pytest.mark.parametrize("expecting_command,talking,timedout", [
     (True,  True,  False),
@@ -121,8 +119,7 @@ def test_has_command_finished_true():
     assert lifecycle.has_command_finished() is True
 
 
-def test_default_audio_converter():
-    lifecycle = SimpleAudioLifecycle()
+def test_default_audio_converter(lifecycle):
     expected = helpers.NoOperationConverter
 
     assert lifecycle.audio_converter_class == expected
@@ -166,10 +163,7 @@ def test_to_lifecycle():
     assert audio_file.lifecycle == lifecycle
 
 
-def test_e2e_snowboy_snowboy_executes_callbacks(enable_snowboy):
-
-    lifecycle = SimpleAudioLifecycle()
-
+def test_e2e_snowboy_snowboy_executes_callbacks(enable_snowboy, lifecycle):
     assert lifecycle.handle_command_started.call_count == 0
     assert lifecycle.handle_command_finised.call_count == 0
 
@@ -189,10 +183,7 @@ def test_e2e_snowboy_snowboy_executes_callbacks(enable_snowboy):
     assert lifecycle.handle_command_finised.call_count == 1
 
 
-def test_e2e_no_wakeword(enable_snowboy):
-
-    lifecycle = SimpleAudioLifecycle()
-
+def test_e2e_no_wakeword(enable_snowboy, lifecycle):
     assert lifecycle.handle_command_started.call_count == 0
     assert lifecycle.handle_command_finised.call_count == 0
 
