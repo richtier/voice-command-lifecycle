@@ -1,5 +1,10 @@
-# voice-command-lifecycle #
-Python library to manage the life-cycle of voice commands. Useful working with Alexa Voice Service.
+# Voice Command Lifecycle #
+
+[![code-climate-image]][code-climate]
+
+**Python library to manage the life-cycle of voice commands. Useful working with Alexa Voice Service.**
+
+---
 
 ## Installation ##
 ```bash
@@ -256,3 +261,7 @@ pip install -r requirements-dev.txt
 
 ## Other projects ##
 This library is used by [alexa-browser-client](https://github.com/richtier/alexa-browser-client), which allows you to talk to Alexa from your browser.
+
+
+[code-climate-image]: https://codeclimate.com/github/richtier/voice-command-lifecycle/badges/gpa.svg
+[code-climate]: https://codeclimate.com/github/richtier/voice-command-lifecycle
