@@ -1,6 +1,7 @@
 # Voice Command Lifecycle #
 
 [![code-climate-image]][code-climate]
+[![circle-ci-image]][circle-ci]
 
 **Python library to manage the life-cycle of voice commands. Useful working with Alexa Voice Service.**
 
@@ -17,6 +18,7 @@ A wakeword is a specific word that triggers the code to spring into action. It a
 The audio lifecycle uses [snowboy](https://github.com/Kitt-AI/snowboy#compile-a-python-wrapper) to determine if the wakeword was uttered. The library will need to be installed first.
 
 Once you have compiled snowboy, copy the compiled `snowboy` folder to the top level of you project. By default, the folder structure should be:
+
 ```
 .
 ├── ...
@@ -265,3 +267,6 @@ This library is used by [alexa-browser-client](https://github.com/richtier/alexa
 
 [code-climate-image]: https://codeclimate.com/github/richtier/voice-command-lifecycle/badges/gpa.svg
 [code-climate]: https://codeclimate.com/github/richtier/voice-command-lifecycle
+
+[circle-ci-image]: https://circleci.com/gh/richtier/voice-command-lifecycle/tree/master.svg?style=svg
+[circle-ci]: https://circleci.com/gh/richtier/voice-command-lifecycle/tree/master
