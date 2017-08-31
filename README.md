@@ -276,5 +276,5 @@ This library is used by [alexa-browser-client](https://github.com/richtier/alexa
 [codecov-image]: https://codecov.io/gh/richtier/voice-command-lifecycle/branch/master/graph/badge.svg
 [codecov]: https://codecov.io/gh/richtier/voice-command-lifecycle
 
-[gemnasium-image]: https://gemnasium.com/badges/github.com/richtier/alexa-browser-clientvoice-command-lifecycle.svg
+[gemnasium-image]: https://gemnasium.com/badges/github.com/richtier/voice-command-lifecycle.svg
 [gemnasium]: https://gemnasium.com/github.com/richtier/voice-command-lifecycle
