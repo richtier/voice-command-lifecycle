@@ -2,6 +2,7 @@
 
 [![code-climate-image]][code-climate]
 [![circle-ci-image]][circle-ci]
+[![codecov-image]][codecov]
 
 **Python library to manage the life-cycle of voice commands. Useful working with Alexa Voice Service.**
 
@@ -270,3 +271,6 @@ This library is used by [alexa-browser-client](https://github.com/richtier/alexa
 
 [circle-ci-image]: https://circleci.com/gh/richtier/voice-command-lifecycle/tree/master.svg?style=svg
 [circle-ci]: https://circleci.com/gh/richtier/voice-command-lifecycle/tree/master
+
+[codecov-image]: https://codecov.io/gh/richtier/voice-command-lifecycle/branch/master/graph/badge.svg
+[codecov]: https://codecov.io/gh/richtier/voice-command-lifecycle
