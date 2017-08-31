@@ -1,2 +1,2 @@
 [run]
-omit =.venv/*,venv/*,tests/*,snowboy/*
+omit =.venv/*,venv/*,tests/*,snowboy/*,setup.py
