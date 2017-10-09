@@ -24,36 +24,48 @@ class BaseWakewordDetector(abc.ABC):
     def is_talking(self, buffer: Type[AudioBufferBase]) -> bool:
         raise NotImplementedError()
 
+    def get_uttered_wakeword_name(self, buffer: Type[AudioBufferBase]) -> str:
+        raise NotImplementedError()
+
 
 class SnowboyWakewordDetector(BaseWakewordDetector):
     """
-    Detect whether a wakeword exists in an audio stream.
-
-    Args:
-        sensitivity: decoder sensitivity, a float.
-                    The bigger the value, the more sensitive the decoder.
-        audio_gain: multiply input volume by this factor.
+    Use snowboy to detect whether a wakeword exists in an audio stream.
 
     """
 
+    SNOWBOY = 'SNOWBOY'
+
     import_error_message = 'Cannot import Snowboy. See README.md for help.'
     wakeword_library_import_path = 'snowboy.snowboydetect.SnowboyDetect'
-
     resource_file = b'snowboy/resources/common.res'
-    decoder_model = b'snowboy/resources/alexa.umdl'
-    sensitivity = 0.5
+    decoder_models = [
+        {
+            'name': SNOWBOY,
+            'model': b'snowboy/resources/alexa.umdl',
+            'sensitivity': b'0.5',
+        }
+    ]
     audio_gain = 1
 
     def __init__(self):
         SnowboyDetect = self.get_wakeword_library()
         self.detector = SnowboyDetect(
-            resource_filename=self.resource_file, model_str=self.decoder_model
+            resource_filename=self.resource_file,
+            model_str=b','.join([i['model'] for i in self.decoder_models]),
         )
         self.detector.SetAudioGain(self.audio_gain)
-        self.detector.SetSensitivity(str(self.sensitivity).encode())
+        self.detector.SetSensitivity(
+            b','.join([i['sensitivity'] for i in self.decoder_models])
+        )
 
     def was_wakeword_uttered(self, buffer: Type[AudioBufferBase]) -> bool:
         return self.detector.RunDetection(buffer.get()) > 0
 
     def is_talking(self, buffer: Type[AudioBufferBase]) -> bool:
         return self.detector.RunDetection(buffer.get()) == 0
+
+    def get_uttered_wakeword_name(self, buffer: Type[AudioBufferBase]) -> str:
+        index = self.detector.RunDetection(buffer.get())
+        assert index > 0
+        return self.decoder_models[index - 1]['name']

@@ -32,3 +32,25 @@ def test_wakeword_is_talking(code, expected):
     snowboy_detector.detector.RunDetection.return_value = code
 
     assert snowboy_detector.is_talking(buffer) is expected
+
+
+def test_wakeword_get_uttered_wakeword_name():
+    buffer = WakewordAudioBuffer([1, 2])
+    snowboy_detector = wakeword.SnowboyWakewordDetector()
+
+    snowboy_detector.detector.RunDetection.return_value = 1
+
+    assert snowboy_detector.get_uttered_wakeword_name(buffer) is (
+        snowboy_detector.SNOWBOY
+    )
+
+
+@pytest.mark.parametrize("code", [-2, -1, 0])
+def test_wakeword_get_uttered_wakeword_name_precondition_unmet(code):
+    buffer = WakewordAudioBuffer([1, 2])
+    snowboy_detector = wakeword.SnowboyWakewordDetector()
+
+    snowboy_detector.detector.RunDetection.return_value = code
+
+    with pytest.raises(AssertionError):
+        snowboy_detector.get_uttered_wakeword_name(buffer)
