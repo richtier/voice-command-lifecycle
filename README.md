@@ -156,7 +156,13 @@ from command_lifecycle import wakeword
 
 
 class MySnowboyWakewordDetector(wakeword.SnowboyWakewordDetector):
-    decoder_model = b'path/to/custom-wakeword-model.umdl'
+    decoder_models = [
+        {
+            'name': 'CUSTOM',
+            'model': b'path/to/custom-wakeword-model.umdl'
+            'sensitivity': b'0.5',
+        }
+    ]
 
 
 class AudioLifecycle(lifecycle.BaseAudioLifecycle):
@@ -177,6 +183,38 @@ lifecycle = AudioLifecycle()
 ```
 
 See the [Snowboy docs](https://github.com/Kitt-AI/snowboy#hotword-as-a-service) for steps on creating custom wakeword models.
+
+
+### Multiple Wakewords ###
+
+Triggering different behaviour for different wakeword may be desirable. To do this use multiple items in `decoder_models`:
+
+```py
+class MyMultipleWakewordDetector(wakeword.SnowboyWakewordDetector):
+    GOOGLE = 'GOOGLE'
+
+    decoder_models = wakeword.SnowboyWakewordDetector.decoder_models + [
+        {
+            'name': GOOGLE,
+            'model': b'path/to/okgoogle.umdl'
+            'sensitivity': b'0.5',
+        }
+    ]
+
+
+class AudioLifecycle(lifecycle.BaseAudioLifecycle):
+    audio_detector_class = MyMultipleWakewordDetector
+
+    def handle_command_started(self):
+        name = self.audio_detector.get_uttered_wakeword_name(self.audio_buffer)
+        if name == self.audio_detector.ALEXA:
+            print('Alexa standing by')
+        elif name == self.audio_detector.GOOGLE:
+            print('Google at your service')
+        super().handle_command_started()
+```
+
+You can download wakewords from [here](https://snowboy.kitt.ai/dashboard).
 
 ### Wakeword detector ###
 
