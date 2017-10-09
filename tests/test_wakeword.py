@@ -41,7 +41,7 @@ def test_wakeword_get_uttered_wakeword_name():
     snowboy_detector.detector.RunDetection.return_value = 1
 
     assert snowboy_detector.get_uttered_wakeword_name(buffer) is (
-        snowboy_detector.SNOWBOY
+        snowboy_detector.ALEXA
     )
 
 

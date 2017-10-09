@@ -190,13 +190,16 @@ See the [Snowboy docs](https://github.com/Kitt-AI/snowboy#hotword-as-a-service) 
 Triggering different behaviour for different wakeword may be desirable. To do this use multiple items in `decoder_models`:
 
 ```py
+from command_lifecycle import wakeword
+
+
 class MyMultipleWakewordDetector(wakeword.SnowboyWakewordDetector):
     GOOGLE = 'GOOGLE'
 
     decoder_models = wakeword.SnowboyWakewordDetector.decoder_models + [
         {
             'name': GOOGLE,
-            'model': b'path/to/okgoogle.umdl'
+            'model': b'path/to/okgoogle.umdl',
             'sensitivity': b'0.5',
         }
     ]

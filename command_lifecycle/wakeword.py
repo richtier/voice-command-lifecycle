@@ -34,14 +34,14 @@ class SnowboyWakewordDetector(BaseWakewordDetector):
 
     """
 
-    SNOWBOY = 'SNOWBOY'
+    ALEXA = 'ALEXA'
 
     import_error_message = 'Cannot import Snowboy. See README.md for help.'
     wakeword_library_import_path = 'snowboy.snowboydetect.SnowboyDetect'
     resource_file = b'snowboy/resources/common.res'
     decoder_models = [
         {
-            'name': SNOWBOY,
+            'name': ALEXA,
             'model': b'snowboy/resources/alexa.umdl',
             'sensitivity': b'0.5',
         }
