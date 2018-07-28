@@ -3,7 +3,6 @@
 [![code-climate-image]][code-climate]
 [![circle-ci-image]][circle-ci]
 [![codecov-image]][codecov]
-[![gemnasium-image]][gemnasium]
 
 **Python library to manage the life-cycle of voice commands. Useful working with Alexa Voice Service.**
 
@@ -96,7 +95,7 @@ with wave.open('./tests/resources/alexa_what_time_is_it.wav', 'rb') as f:
     while f.tell() < f.getnframes():
         lifecycle.extend_audio(f.readframes(1024))
     # pad with silence at the end. See "Expecting slower or faster commands".
-    for i in range(lifecycle.timeout_manager.remaining_silent_frames + 1):
+    for i in range(lifecycle.timeout_manager.remaining_silent_seconds + 1):
         lifecycle.extend_audio(bytes([0, 0]*(1024*9)))
 ```
 
@@ -271,11 +270,11 @@ To avoid this the lifecycle tolerates some silence in the command before the lif
 
 To change this default behaviour `timeout_manager_class` can be changed. The available timeout managers are:
 
-| Timeout manager         | Notes                                            |
-| -------------------------| ------------------------------------------------ |
+| Timeout manager            | Notes                                            |
+| ---------------------------| ------------------------------------------------ |
 | `ShortTimeoutManager`      | Allows one second of silence.                    |
-| `MediumTimeoutManager`     | **default** Allows two seconds of silence.       |
-| `LongTimeoutManager`       | Allows tree seconds of silence                   |
+| `MediumTimeoutManager`     | **default** Allows 2 seconds of silence.         |
+| `LongTimeoutManager`       | Allows three seconds of silence.                 |
 
 To make a custom timeout manager create a subclass of `command_lifecycle.timeout.BaseTimeoutManager`:
 
@@ -287,7 +286,7 @@ from command_lifecycle import timeout, wakeword
 
 
 class MyCustomTimeoutManager(timeout.BaseTimeoutManager):
-    allowed_silent_frames = 40
+    allowed_silent_seconds = 4
 
 
 class AudioLifecycle(lifecycle.BaseAudioLifecycle):
@@ -304,6 +303,10 @@ pip install -r requirements-dev.txt
 ./scripts/tests.sh
 ```
 
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [PyPI](https://pypi.org/project/command-lifecycle/#history).
+
 ## Other projects ##
 This library is used by [alexa-browser-client](https://github.com/richtier/alexa-browser-client), which allows you to talk to Alexa from your browser.
 
@@ -316,6 +319,3 @@ This library is used by [alexa-browser-client](https://github.com/richtier/alexa
 
 [codecov-image]: https://codecov.io/gh/richtier/voice-command-lifecycle/branch/master/graph/badge.svg
 [codecov]: https://codecov.io/gh/richtier/voice-command-lifecycle
-
-[gemnasium-image]: https://gemnasium.com/badges/github.com/richtier/voice-command-lifecycle.svg
-[gemnasium]: https://gemnasium.com/github.com/richtier/voice-command-lifecycle

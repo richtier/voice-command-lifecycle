@@ -101,4 +101,3 @@ ENV/
 .mypy_cache/
 
 snowboy
-README.rst

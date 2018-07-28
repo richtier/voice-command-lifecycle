@@ -1,3 +1,4 @@
+import time
 from unittest.mock import call, Mock, patch
 import wave
 
@@ -175,9 +176,9 @@ def test_e2e_snowboy_snowboy_executes_callbacks(enable_snowboy, lifecycle):
     # finished not called yet: the command has not timedout yet
     assert lifecycle.handle_command_finised.call_count == 0
 
-    # pass in silence to trigger timeout
-    for i in range(lifecycle.timeout_manager.allowed_silent_frames+1):
-        lifecycle.extend_audio(bytes([0, 0]*(1024*10)))
+    # waiting for timeout then pass in long silence
+    time.sleep(lifecycle.timeout_manager_class.allowed_silent_seconds + 0.5)
+    lifecycle.extend_audio(bytes([0, 0]*(1024*10)))
 
     # timeout has now happened
     assert lifecycle.handle_command_finised.call_count == 1

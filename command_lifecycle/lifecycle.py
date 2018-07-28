@@ -23,12 +23,11 @@ class BaseAudioLifecycle:
         self.audio_buffer.extend(wav_audio)
         if self.was_wakeword_uttered():
             self.handle_command_started()
+            self.timeout_manager.reset()
         elif self.has_command_finished():
             self.handle_command_finised()
         elif self.is_talking():
             self.timeout_manager.reset()
-        elif self.is_command_pending:
-            self.timeout_manager.increment()
 
     def is_talking(self) -> bool:
         return self.audio_detector.is_talking(self.audio_buffer)
