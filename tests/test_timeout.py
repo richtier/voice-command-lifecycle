@@ -1,10 +1,13 @@
+from datetime import datetime, timedelta
+
+from freezegun import freeze_time
 import pytest
 
 from command_lifecycle import timeout
 
 
 class SimpleTimeoutManager(timeout.BaseTimeoutManager):
-    allowed_silent_frames = 10
+    allowed_silent_seconds = 1
 
 
 @pytest.fixture
@@ -24,30 +27,26 @@ def test_missing_timeout_seconds_subclass():
         TimeoutManager()
 
 
-def test_allowed_silent_frames():
-    assert timeout.ShortTimeoutManager.allowed_silent_frames == 10
-    assert timeout.MediumTimeoutManager.allowed_silent_frames == 15
-    assert timeout.LongTimeoutManager.allowed_silent_frames == 20
-
-
-def test_increment(manager):
-    assert manager.elapsed_silent_frames == 0
-
-    manager.increment()
-
-    assert manager.elapsed_silent_frames == 1
+def test_allowed_silent_seconds():
+    assert timeout.ShortTimeoutManager.allowed_silent_seconds == 1
+    assert timeout.MediumTimeoutManager.allowed_silent_seconds == 2
+    assert timeout.LongTimeoutManager.allowed_silent_seconds == 3
 
 
 def test_reset(manager):
-    manager.elapsed_silent_frames = 10
+    silence_started_time = datetime.utcnow() - timedelta(seconds=1)
+    manager.silence_started_time = silence_started_time
 
-    assert manager.elapsed_silent_frames == 10
+    assert manager.silence_started_time == silence_started_time
 
-    manager.reset()
+    expected = datetime(2012, 1, 14, 3, 21, 34)
+    with freeze_time(expected):
+        manager.reset()
 
-    assert manager.elapsed_silent_frames == 0
+    assert manager.silence_started_time == expected
 
 
+@freeze_time(datetime(2012, 1, 14, 3, 21, 34))
 @pytest.mark.parametrize('allowed,elapsed,expected', [
     [5, 0, False],
     [5, 4, False],
@@ -55,20 +54,24 @@ def test_reset(manager):
     [5, 6, True],
 ])
 def test_has_timedout(manager, allowed, elapsed, expected):
-    manager.allowed_silent_frames = allowed
-    manager.elapsed_silent_frames = elapsed
-
+    manager.allowed_silent_seconds = allowed
+    manager.silence_started_time = (
+        datetime.utcnow() - timedelta(seconds=elapsed)
+    )
     assert manager.has_timedout() is expected
 
 
+@freeze_time(datetime(2012, 1, 14, 3, 21, 34))
 @pytest.mark.parametrize('allowed,elapsed,expected', [
     [5, 0, 5],
     [5, 4, 1],
     [5, 5, 0],
     [5, 6, -1],
 ])
-def test_remaining_silent_frames(manager, allowed, elapsed, expected):
-    manager.allowed_silent_frames = allowed
-    manager.elapsed_silent_frames = elapsed
+def test_remaining_silent_seconds(manager, allowed, elapsed, expected):
+    manager.allowed_silent_seconds = allowed
+    manager.silence_started_time = (
+        datetime.utcnow() - timedelta(seconds=elapsed)
+    )
 
-    assert manager.remaining_silent_frames == expected
+    assert manager.remaining_silent_seconds == expected
