@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
     name='command_lifecycle',
     packages=['command_lifecycle'],
-    version='2.1.0',
+    version='2.1.2',
     url='https://github.com/richtier/voice-command-lifecycle',
     license='MIT',
     author='Richard Tier',
