@@ -4,13 +4,14 @@ from setuptools import setup
 setup(
     name='command_lifecycle',
     packages=['command_lifecycle'],
-    version='2.1.2',
+    version='2.2.0',
     url='https://github.com/richtier/voice-command-lifecycle',
     license='MIT',
     author='Richard Tier',
     author_email='rikatee@gmail.com',
     description='Python library to manage the life-cycle of voice commands.',
-    long_description=open('docs/README.rst').read(),
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     include_package_data=True,
     install_requires=[],
     classifiers=[
