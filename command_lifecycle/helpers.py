@@ -5,10 +5,20 @@ from typing import Iterable
 
 
 class NoOperationConverter:
-    """If the inbound audio is already wav then no operation needed."""
+    """If the inbound audio is already wave bytes then no operation needed."""
     @classmethod
-    def convert(cls, wav_bytes):
-        return wav_bytes
+    def convert(cls, samples: bytes) -> bytes:
+        return samples
+
+
+class WavIntSamplestoWavConverter:
+    """
+    Convert list of integers to wav.
+
+    """
+    @classmethod
+    def convert(cls, samples: Iterable[int]) -> bytes:
+        return struct.pack("<%dh" % len(samples), *samples)
 
 
 class WebAudioToWavConverter:
@@ -29,9 +39,9 @@ class WebAudioToWavConverter:
     audio_channels = 1
 
     @classmethod
-    def convert(cls, raw_floats: Iterable[float]) -> Iterable[int]:
+    def convert(cls, samples: Iterable[float]) -> bytes:
         left_channel, right_channel = audioop.ratecv(
-            cls.float_to_pcm(raw_floats),
+            cls.float_to_pcm(samples),
             cls.sample_width,
             cls.audio_channels,
             cls.webaudio_sample_rate,  # input rate
@@ -41,8 +51,8 @@ class WebAudioToWavConverter:
         return left_channel
 
     @classmethod
-    def float_to_pcm(cls, raw_floats: Iterable[float]) -> Iterable[int]:
-        floats = array('f', raw_floats)
+    def float_to_pcm(cls, samples: Iterable[float]) -> bytes:
+        floats = array('f', samples)
         # powerful microphones can output samples out of range (<-1.0, >1.0).
         floats = (filter(lambda x: x >= -1.0 and x <= 1.0, floats))
         samples = [int(sample * 32767) for sample in floats]

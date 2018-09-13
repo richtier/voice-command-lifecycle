@@ -62,3 +62,10 @@ def test_lifecycle_filelike_length_expecting_audio():
     file_like = helpers.LifeCycleFileLike(audio_lifecycle)
 
     assert len(file_like) == 1025
+
+
+def test_wav_integer_samples_to_wav():
+    input_value = [1, 2, 3, 4, 5]
+    output_value = helpers.WavIntSamplestoWavConverter.convert(input_value)
+
+    assert output_value == b'\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00'
