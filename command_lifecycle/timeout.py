@@ -4,6 +4,7 @@ from datetime import datetime
 
 class BaseTimeoutManager(abc.ABC):
     allowed_silent_seconds = abc.abstractproperty()
+    silence_started_time = None
 
     def reset(self):
         self.silence_started_time = datetime.utcnow()
