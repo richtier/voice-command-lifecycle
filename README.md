@@ -341,3 +341,4 @@ This library is used by [alexa-browser-client](https://github.com/richtier/alexa
 
 [codecov-image]: https://codecov.io/gh/richtier/voice-command-lifecycle/branch/master/graph/badge.svg
 [codecov]: https://codecov.io/gh/richtier/voice-command-lifecycle
+
