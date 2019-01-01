@@ -1,13 +1,12 @@
 from array import array
 import audioop
 import struct
-from typing import Iterable
 
 
 class NoOperationConverter:
     """If the inbound audio is already wave bytes then no operation needed."""
     @classmethod
-    def convert(cls, samples: bytes) -> bytes:
+    def convert(cls, samples):
         return samples
 
 
@@ -17,7 +16,7 @@ class WavIntSamplestoWavConverter:
 
     """
     @classmethod
-    def convert(cls, samples: Iterable[int]) -> bytes:
+    def convert(cls, samples):
         return struct.pack("<%dh" % len(samples), *samples)
 
 
@@ -39,7 +38,7 @@ class WebAudioToWavConverter:
     audio_channels = 1
 
     @classmethod
-    def convert(cls, samples: Iterable[float]) -> bytes:
+    def convert(cls, samples):
         left_channel, right_channel = audioop.ratecv(
             cls.float_to_pcm(samples),
             cls.sample_width,
@@ -51,7 +50,7 @@ class WebAudioToWavConverter:
         return left_channel
 
     @classmethod
-    def float_to_pcm(cls, samples: Iterable[float]) -> bytes:
+    def float_to_pcm(cls, samples):
         floats = array('f', samples)
         # powerful microphones can output samples out of range (<-1.0, >1.0).
         floats = (filter(lambda x: x >= -1.0 and x <= 1.0, floats))

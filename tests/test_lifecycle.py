@@ -45,7 +45,7 @@ def test_extend_audio_extends_audio_buffer(extend_byte_payloads, expected):
 @pytest.mark.parametrize("wakeword_name,call_count", [['ALEXA', 1], [None, 0]])
 def test_extend_audio_wakeword_uttered_handled(wakeword_name, call_count):
     class AudioLifecycle(BaseAudioLifecycle):
-        get_uttered_wakeword_name = Mock(return_value=was_uttered)
+        get_uttered_wakeword_name = Mock(return_value=wakeword_name)
         handle_command_started = Mock()
 
     lifecycle = AudioLifecycle()
