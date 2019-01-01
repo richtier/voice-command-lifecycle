@@ -1,5 +1,3 @@
-from typing import Iterable
-
 from command_lifecycle import buffer, helpers, timeout, wakeword
 
 
@@ -18,27 +16,28 @@ class BaseAudioLifecycle:
         self.audio_detector = self.audio_detector_class()
         self.timeout_manager = self.timeout_manager_class()
 
-    def extend_audio(self, input_audio: Iterable[int]):
+    def extend_audio(self, input_audio):
         wav_audio = self.audio_converter_class.convert(input_audio)
         self.audio_buffer.extend(wav_audio)
-        if self.was_wakeword_uttered():
-            self.handle_command_started()
+        wakeword_name = self.get_uttered_wakeword_name()
+        if wakeword_name:
+            self.handle_command_started(wakeword_name=wakeword_name)
             self.timeout_manager.reset()
         elif self.has_command_finished():
             self.handle_command_finised()
         elif self.is_talking():
             self.timeout_manager.reset()
 
-    def is_talking(self) -> bool:
+    def is_talking(self):
         return self.audio_detector.is_talking(self.audio_buffer)
 
-    def was_wakeword_uttered(self) -> bool:
-        return self.audio_detector.was_wakeword_uttered(self.audio_buffer)
+    def get_uttered_wakeword_name(self):
+        return self.audio_detector.get_uttered_wakeword_name(self.audio_buffer)
 
-    def has_timedout(self) -> bool:
+    def has_timedout(self):
         return self.timeout_manager.has_timedout()
 
-    def has_command_finished(self) -> bool:
+    def has_command_finished(self):
         if not self.is_command_pending:
             return False
         # prevent prematurely finishing the command
@@ -46,7 +45,7 @@ class BaseAudioLifecycle:
         # being uttered and the command being said.
         return not self.is_talking() and self.has_timedout()
 
-    def handle_command_started(self):
+    def handle_command_started(self, wakeword_name):
         self.is_command_pending = True
         self.audio_buffer = self.command_audio_buffer_class()
 

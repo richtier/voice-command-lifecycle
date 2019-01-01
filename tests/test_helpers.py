@@ -27,7 +27,7 @@ def test_no_operation_converter():
 
 def test_lifecycle_filelike_reads_from_buffer():
     class AudioLifecycle(lifecycle.BaseAudioLifecycle):
-        was_wakeword_uttered = Mock(return_value=False)
+        get_uttered_wakeword_name = Mock(return_value=None)
 
     audio_lifecycle = AudioLifecycle()
     audio_lifecycle.extend_audio(b'12345678')
@@ -40,7 +40,7 @@ def test_lifecycle_filelike_reads_from_buffer():
 
 def test_lifecycle_filelike_length_not_expecting_audio():
     class AudioLifecycle(lifecycle.BaseAudioLifecycle):
-        was_wakeword_uttered = Mock(return_value=False)
+        get_uttered_wakeword_name = Mock(return_value=None)
 
     audio_lifecycle = AudioLifecycle()
     audio_lifecycle.extend_audio(b'12345678')
@@ -53,7 +53,7 @@ def test_lifecycle_filelike_length_not_expecting_audio():
 
 def test_lifecycle_filelike_length_expecting_audio():
     class AudioLifecycle(lifecycle.BaseAudioLifecycle):
-        was_wakeword_uttered = Mock(return_value=False)
+        get_uttered_wakeword_name = Mock(return_value=None)
 
     audio_lifecycle = AudioLifecycle()
     audio_lifecycle.extend_audio(b'12345678')

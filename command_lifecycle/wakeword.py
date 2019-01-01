@@ -1,8 +1,5 @@
 import abc
 import importlib
-from typing import Type
-
-from command_lifecycle.buffer import AudioBufferBase
 
 
 class BaseWakewordDetector(abc.ABC):
@@ -18,14 +15,13 @@ class BaseWakewordDetector(abc.ABC):
             raise ImportError(self.import_error_message)
         return getattr(package_name, name)
 
-    def was_wakeword_uttered(self, buffer: Type[AudioBufferBase]) -> bool:
-        raise NotImplementedError()
+    @abc.abstractmethod
+    def is_talking(self, buffer):
+        return False
 
-    def is_talking(self, buffer: Type[AudioBufferBase]) -> bool:
-        raise NotImplementedError()
-
-    def get_uttered_wakeword_name(self, buffer: Type[AudioBufferBase]) -> str:
-        raise NotImplementedError()
+    @abc.abstractmethod
+    def get_uttered_wakeword_name(self):
+        return None
 
 
 class SnowboyWakewordDetector(BaseWakewordDetector):
@@ -59,13 +55,10 @@ class SnowboyWakewordDetector(BaseWakewordDetector):
             b','.join([i['sensitivity'] for i in self.decoder_models])
         )
 
-    def was_wakeword_uttered(self, buffer: Type[AudioBufferBase]) -> bool:
-        return self.detector.RunDetection(buffer.get()) > 0
-
-    def is_talking(self, buffer: Type[AudioBufferBase]) -> bool:
+    def is_talking(self, buffer):
         return self.detector.RunDetection(buffer.get()) == 0
 
-    def get_uttered_wakeword_name(self, buffer: Type[AudioBufferBase]) -> str:
+    def get_uttered_wakeword_name(self, buffer):
         index = self.detector.RunDetection(buffer.get())
-        assert index > 0
-        return self.decoder_models[index - 1]['name']
+        if index > 0:
+            return self.decoder_models[index - 1]['name']
