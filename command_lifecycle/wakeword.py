@@ -18,9 +18,6 @@ class BaseWakewordDetector(abc.ABC):
             raise ImportError(self.import_error_message)
         return getattr(package_name, name)
 
-    def was_wakeword_uttered(self, buffer: Type[AudioBufferBase]) -> bool:
-        raise NotImplementedError()
-
     def is_talking(self, buffer: Type[AudioBufferBase]) -> bool:
         raise NotImplementedError()
 
@@ -59,13 +56,10 @@ class SnowboyWakewordDetector(BaseWakewordDetector):
             b','.join([i['sensitivity'] for i in self.decoder_models])
         )
 
-    def was_wakeword_uttered(self, buffer: Type[AudioBufferBase]) -> bool:
-        return self.detector.RunDetection(buffer.get()) > 0
-
     def is_talking(self, buffer: Type[AudioBufferBase]) -> bool:
         return self.detector.RunDetection(buffer.get()) == 0
 
     def get_uttered_wakeword_name(self, buffer: Type[AudioBufferBase]) -> str:
         index = self.detector.RunDetection(buffer.get())
-        assert index > 0
-        return self.decoder_models[index - 1]['name']
+        if index > 0:
+            return self.decoder_models[index - 1]['name']

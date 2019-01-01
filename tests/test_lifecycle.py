@@ -32,7 +32,7 @@ def lifecycle():
 ])
 def test_extend_audio_extends_audio_buffer(extend_byte_payloads, expected):
     class AudioLifecycle(BaseAudioLifecycle):
-        was_wakeword_uttered = Mock(return_value=False)
+        get_uttered_wakeword_name = Mock(return_value=None)
 
     lifecycle = AudioLifecycle()
 
@@ -42,10 +42,10 @@ def test_extend_audio_extends_audio_buffer(extend_byte_payloads, expected):
     assert lifecycle.audio_buffer.get() == expected
 
 
-@pytest.mark.parametrize("was_uttered,call_count", [[True, 1], [False, 0]])
-def test_extend_audio_wakeword_uttered_handled(was_uttered, call_count):
+@pytest.mark.parametrize("wakeword_name,call_count", [['ALEXA', 1], [None, 0]])
+def test_extend_audio_wakeword_uttered_handled(wakeword_name, call_count):
     class AudioLifecycle(BaseAudioLifecycle):
-        was_wakeword_uttered = Mock(return_value=was_uttered)
+        get_uttered_wakeword_name = Mock(return_value=was_uttered)
         handle_command_started = Mock()
 
     lifecycle = AudioLifecycle()
@@ -60,7 +60,7 @@ def test_extend_audio_command_finished_handled(has_finished, call_count):
     class AudioLifecycle(BaseAudioLifecycle):
         has_command_finished = Mock(return_value=has_finished)
         handle_command_finised = Mock()
-        was_wakeword_uttered = Mock(return_value=False)
+        get_uttered_wakeword_name = Mock(return_value=None)
     lifecycle = AudioLifecycle()
 
     lifecycle.extend_audio(b'one')
@@ -69,7 +69,7 @@ def test_extend_audio_command_finished_handled(has_finished, call_count):
 
 
 def test_handle_command_started_sets_state(lifecycle):
-    lifecycle.handle_command_started()
+    lifecycle.handle_command_started('ALEXA')
 
     assert lifecycle.is_command_pending is True
     assert isinstance(
@@ -138,7 +138,7 @@ def test_default_audio_explicit():
 
 def test_extend_audio_converts_to_wav():
     class AudioLifecycle(BaseAudioLifecycle):
-        was_wakeword_uttered = Mock(return_value=False)
+        get_uttered_wakeword_name = Mock(return_value=None)
         has_command_finished = Mock(return_value=False)
         audio_converter_class = Mock(convert=Mock(return_value='return-value'))
         wakeword_audio_buffer_class = Mock
@@ -154,7 +154,7 @@ def test_extend_audio_converts_to_wav():
 
 def test_to_lifecycle():
     class AudioLifecycle(BaseAudioLifecycle):
-        was_wakeword_uttered = Mock(return_value=False)
+        get_uttered_wakeword_name = Mock(return_value=None)
 
     lifecycle = AudioLifecycle()
     lifecycle.extend_audio(b'1234')
