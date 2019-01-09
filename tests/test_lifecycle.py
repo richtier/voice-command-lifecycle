@@ -1,15 +1,27 @@
-import time
 from unittest.mock import call, Mock, patch
 import wave
 
 import pytest
+from resettabletimer import FakeTimer
 
 from command_lifecycle import BaseAudioLifecycle, helpers
 
 
+class FakeTimeoutManager(FakeTimer):
+    allowed_silent_seconds = 1
+
+    def __init__(self, function):
+        super().__init__(time=self.allowed_silent_seconds, function=function)
+
+    def reset(self, start=False):
+        if start:
+            self.start()
+
+
 class SimpleAudioLifecycle(BaseAudioLifecycle):
+    timeout_manager_class = FakeTimeoutManager
+
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         patch.object(
             self, 'handle_command_started',
             wraps=self.handle_command_started
@@ -18,6 +30,7 @@ class SimpleAudioLifecycle(BaseAudioLifecycle):
             self, 'handle_command_finised',
             wraps=self.handle_command_finised
         ).start()
+        super().__init__(*args, **kwargs)
 
 
 @pytest.fixture
@@ -58,18 +71,32 @@ def test_extend_audio_wakeword_uttered_handled(wakeword_name, call_count):
 @pytest.mark.parametrize("has_finished,call_count", [[True, 1], [False, 0]])
 def test_extend_audio_command_finished_handled(has_finished, call_count):
     class AudioLifecycle(BaseAudioLifecycle):
-        has_command_finished = Mock(return_value=has_finished)
         handle_command_finised = Mock()
-        get_uttered_wakeword_name = Mock(return_value=None)
+        get_uttered_wakeword_name = Mock(return_value='ALEXA')
+        timeout_manager_class = FakeTimeoutManager
+
     lifecycle = AudioLifecycle()
 
     lifecycle.extend_audio(b'one')
 
+    if has_finished:
+        lifecycle.timeout_manager.pass_time(
+            lifecycle.timeout_manager.allowed_silent_seconds
+        )
+
     assert lifecycle.handle_command_finised.call_count == call_count
 
 
-def test_handle_command_started_sets_state(lifecycle):
+def test_handle_command_started_sets_state():
+    class AudioLifecycle(SimpleAudioLifecycle):
+        timeout_manager_class = Mock()
+
+    lifecycle = AudioLifecycle()
+
     lifecycle.handle_command_started('ALEXA')
+
+    assert lifecycle.timeout_manager.reset.call_count == 1
+    assert lifecycle.timeout_manager.reset.call_args == call(start=True)
 
     assert lifecycle.is_command_pending is True
     assert isinstance(
@@ -85,39 +112,6 @@ def test_handle_command_finised_sets_state(lifecycle):
         lifecycle.audio_buffer,
         SimpleAudioLifecycle.wakeword_audio_buffer_class
     )
-
-
-@pytest.mark.parametrize("expecting_command,talking,timedout", [
-    (True,  True,  False),
-    (True,  True,  True),
-    (True,  False, False),
-    (False, True,  True),
-    (False, True,  False),
-    (False, False, False),
-    (False, False, True),
-])
-def test_has_command_finished_false(expecting_command, talking, timedout):
-
-    class AudioLifecycle(BaseAudioLifecycle):
-        is_command_pending = expecting_command
-        is_talking = Mock(return_value=talking)
-        has_timedout = Mock(return_value=timedout)
-
-    lifecycle = AudioLifecycle()
-
-    assert lifecycle.has_command_finished() is False
-
-
-def test_has_command_finished_true():
-
-    class AudioLifecycle(BaseAudioLifecycle):
-        is_command_pending = True
-        is_talking = Mock(return_value=False)
-        has_timedout = Mock(return_value=True)
-
-    lifecycle = AudioLifecycle()
-
-    assert lifecycle.has_command_finished() is True
 
 
 def test_default_audio_converter(lifecycle):
@@ -139,7 +133,6 @@ def test_default_audio_explicit():
 def test_extend_audio_converts_to_wav():
     class AudioLifecycle(BaseAudioLifecycle):
         get_uttered_wakeword_name = Mock(return_value=None)
-        has_command_finished = Mock(return_value=False)
         audio_converter_class = Mock(convert=Mock(return_value='return-value'))
         wakeword_audio_buffer_class = Mock
 
@@ -173,14 +166,13 @@ def test_e2e_snowboy_snowboy_executes_callbacks(enable_snowboy, lifecycle):
             lifecycle.extend_audio(f.readframes(1024))
 
     assert lifecycle.handle_command_started.call_count == 1
-    # finished not called yet: the command has not timedout yet
+    # finished not called yet: the command has not timed out yet
     assert lifecycle.handle_command_finised.call_count == 0
 
-    # waiting for timeout then pass in long silence
-    time.sleep(lifecycle.timeout_manager_class.allowed_silent_seconds + 0.5)
-    lifecycle.extend_audio(bytes([0, 0]*(1024*10)))
+    lifecycle.timeout_manager.pass_time(
+        lifecycle.timeout_manager.allowed_silent_seconds + 1
+    )
 
-    # timeout has now happened
     assert lifecycle.handle_command_finised.call_count == 1
 
 

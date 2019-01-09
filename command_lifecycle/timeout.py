@@ -1,26 +1,17 @@
 import abc
-from datetime import datetime
+
+from resettabletimer import ResettableTimer
 
 
-class BaseTimeoutManager(abc.ABC):
-    allowed_silent_seconds = abc.abstractproperty()
-    silence_started_time = None
-
-    def reset(self):
-        self.silence_started_time = datetime.utcnow()
-
-    def has_timedout(self):
-        return self.remaining_silent_seconds <= 0
+class BaseTimeoutManager(abc.ABC, ResettableTimer):
 
     @property
-    def elapsed_silent_seconds(self):
-        if self.silence_started_time is None:
-            raise ValueError('reset must be called before this method')
-        return (datetime.utcnow() - self.silence_started_time).total_seconds()
+    @abc.abstractmethod
+    def allowed_silent_seconds(self):
+        return 0
 
-    @property
-    def remaining_silent_seconds(self):
-        return self.allowed_silent_seconds - self.elapsed_silent_seconds
+    def __init__(self, function):
+        super().__init__(time=self.allowed_silent_seconds, function=function)
 
 
 class ShortTimeoutManager(BaseTimeoutManager):
