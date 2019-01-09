@@ -48,13 +48,13 @@ import command_lifecycle
 
 class AudioLifecycle(command_lifecycle.BaseAudioLifecycle):
 
-    def handle_command_started(self):
-        super().handle_command_started()
-        print('The audio contained the wakeword!')
+    def handle_command_started(self, wakeword_name):
+        super().handle_command_started(wakeword_name)
+        print(f'The audio contained {wakeword_name}!')
 
     def handle_command_finised(self):
         super().handle_command_finised()
-        print('the command in the audio has finished')
+        print('The command has finished')
 
 lifecycle = AudioLifecycle()
 
@@ -79,24 +79,19 @@ import wave
 
 import command_lifecycle
 
-
 class AudioLifecycle(command_lifecycle.BaseAudioLifecycle):
-    def handle_command_started(self):
-        super().handle_command_started()
-        print('The audio contained the wakeword!')
-
-    def handle_command_finised(self):
-        super().handle_command_finised()
-        print('the command in the audio has finished')
+    def handle_command_started(self, wakeword_name):
+        super().handle_command_started(wakeword_name)
+        print(f'The audio contained {wakeword_name}!')
 
 
 lifecycle = AudioLifecycle()
 with wave.open('./tests/resources/alexa_what_time_is_it.wav', 'rb') as f:
     while f.tell() < f.getnframes():
         lifecycle.extend_audio(f.readframes(1024))
-    # pad with silence at the end. See "Expecting slower or faster commands".
-    for i in range(lifecycle.timeout_manager.remaining_silent_seconds + 1):
-        lifecycle.extend_audio(bytes([0, 0]*(1024*9)))
+
+print('The command has finished')
+
 ```
 
 ### Usage with Alexa ###
@@ -121,11 +116,10 @@ class AudioLifecycle(command_lifecycle.BaseAudioLifecycle):
         self.alexa_client.connect()
         super().__init__()
 
-    def handle_command_started(self):
-        super().handle_command_started()
+    def handle_command_started(self, wakeword_name):
+        super().handle_command_started(wakeword_name)
         audio_file = command_lifecycle.to_audio_file()
-        alexa_response_audio = self.alexa_client.send_audio_file(audio_file)
-        if alexa_response_audio:
+        for directive in self.alexa_client.send_audio_file(audio_file):
             # do something with the AVS audio response, e.g., play it.
 
 lifecycle = AudioLifecycle()
@@ -167,16 +161,16 @@ class MySnowboyWakewordDetector(wakeword.SnowboyWakewordDetector):
 class AudioLifecycle(lifecycle.BaseAudioLifecycle):
     audio_detector_class = MySnowboyWakewordDetector
 
-    def handle_command_started(self):
-        super().handle_command_started()
-        print('The audio contained the wakeword!')
+    def handle_command_started(self, wakeword_name):
+        super().handle_command_started(wakeword_name)
+        print(f'The audio contained the {wakeword_name}!')
 
     def handle_command_finised(self):
         super().handle_command_finised()
-        print('the command in the audio has finished')
-
+        print('The command has finished')
 
 lifecycle = AudioLifecycle()
+
 # now load the audio into lifecycle
 
 ```
@@ -207,13 +201,12 @@ class MyMultipleWakewordDetector(wakeword.SnowboyWakewordDetector):
 class AudioLifecycle(lifecycle.BaseAudioLifecycle):
     audio_detector_class = MyMultipleWakewordDetector
 
-    def handle_command_started(self):
-        name = self.audio_detector.get_uttered_wakeword_name(self.audio_buffer)
-        if name == self.audio_detector.ALEXA:
+    def handle_command_started(self, wakeword_name):
+        if wakeword_name == self.audio_detector.ALEXA:
             print('Alexa standing by')
-        elif name == self.audio_detector.GOOGLE:
+        elif wakeword_name == self.audio_detector.GOOGLE:
             print('Google at your service')
-        super().handle_command_started()
+        super().handle_command_started(wakeword_name)
 ```
 
 You can download wakewords from [here](https://snowboy.kitt.ai/dashboard).
@@ -246,14 +239,7 @@ class MyCustomWakewordDetector(wakeword.BaseWakewordDetector):
 
 class AudioLifecycle(lifecycle.BaseAudioLifecycle):
     audio_detector_class = MyCustomWakewordDetector
-
-    def handle_command_started(self):
-        super().handle_command_started()
-        print('The audio contained the wakeword!')
-
-    def handle_command_finised(self):
-        super().handle_command_finised()
-        print('the command in the audio has finished')
+    ...
 
 
 lifecycle = AudioLifecycle()
@@ -321,8 +307,8 @@ class AudioLifecycle(lifecycle.BaseAudioLifecycle):
 To run the unit tests, call the following commands:
 
 ```sh
-pip install -r requirements-dev.txt
-./scripts/tests.sh
+make test_requirements
+make test
 ```
 
 ## Versioning
